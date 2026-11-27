@@ -6,6 +6,8 @@ import { COURSES, LEGAL_CATEGORIES } from './catalog.js';
 import { esc, fmtCOP, fmtDate, fmtHours, richText, readSeconds, cleanTitle, root, toast } from './dom.js';
 import { addToCart, getCart } from './store.js';
 import { generateSampleCertificatePDF } from './sample-certificate.js';
+import { renderCourseScene, renderModuleVisual, renderCourseSimulator, renderMasterySummary, bindInteractiveVisuals, coursePhoto } from './interactive-visuals.js';
+import { renderPermitsGuide } from './permits-guide.js';
 
 export const byId = Object.fromEntries(COURSES.map((c) => [c.id, c]));
 const session = () => API.getSession();
@@ -62,43 +64,37 @@ function progressBar(pct, label) {
 export async function renderLanding() {
   const legal = APP_CONFIG.legalScopeStatement;
   root().innerHTML = `
-    <section class="sst-hero">
+    <section class="sst-hero sst-hero-pro">
       <div class="sst-hero-text">
-        <span class="sst-eyebrow">Formación teórica SST · Normativa colombiana</span>
-        <h1 class="sst-hero-title">Capacite a su equipo en seguridad industrial, a su ritmo y con constancia verificable</h1>
-        <p class="sst-hero-sub">Cursos virtuales con casos reales de planta, prácticas en cada módulo y evaluación calificada en el servidor. Cada constancia lleva un código QR que cualquier empresa puede verificar en línea.</p>
+        <span class="sst-eyebrow">Formación Virtual SST · Normativa Colombiana Vigente</span>
+        <h1 class="sst-hero-title">Capacitación SST práctica e interactiva para equipos de alto desempeño</h1>
+        <p class="sst-hero-sub">Cursos virtuales con diagramas interactivos, simuladores de campo y casos reales de planta. Su equipo aprende de verdad, a su ritmo y con constancia verificable al aprobar.</p>
         <div class="sst-hero-cta">
-          <button class="iui-btn iui-btn-primary sst-btn-lg" id="go-courses">Ver los ${COURSES.length} cursos</button>
-          <button class="iui-btn iui-btn-secondary sst-btn-lg" id="btn-sample-pdf">Ver ejemplo de constancia PDF</button>
-          <a class="iui-btn iui-btn-ghost sst-btn-lg" href="#verify">Verificar una constancia</a>
+          <button class="iui-btn iui-btn-primary sst-btn-lg" id="go-courses">Explorar los ${COURSES.length} cursos</button>
+          <a class="iui-btn iui-btn-secondary sst-btn-lg" href="#store">Paquetes para empresas</a>
         </div>
       </div>
-      <div class="sst-hero-card" aria-hidden="true">
-        <div class="sst-mini-cert">
-          <div class="sst-mini-cert-top">CONSTANCIA DE FORMACIÓN TEÓRICA</div>
-          <div class="sst-mini-cert-name">Nombre del trabajador</div>
-          <div class="sst-mini-cert-course">Etiquetado y Bloqueo de Energías Peligrosas (LOTO)</div>
-          <div class="sst-mini-cert-row"><span>Puntaje 90 %</span><span class="sst-mini-qr"></span></div>
-          <div class="sst-mini-cert-code">CERT-2026-LOTO-7F3A9C21</div>
+      <div class="sst-hero-card sst-hero-card-clean">
+        <div class="sst-pro-panel sst-pro-panel-light">
+          <div class="sst-pro-banner sst-pro-banner-tall">
+            <img src="./img/scenes/scene-mgmt.jpg" alt="Equipo SST en capacitación práctica" />
+            <div class="sst-pro-banner-overlay">
+              <span class="sst-pro-dot"></span>
+              <span>Aprende desde celular, tablet o computador</span>
+            </div>
+          </div>
+          <div class="sst-pro-panel-foot sst-pro-panel-foot-clean">
+            <span>Escenas reales · Simuladores · Acceso 12 meses</span>
+          </div>
         </div>
       </div>
     </section>
 
-    <section class="sst-trust" aria-label="Por qué elegirnos">
-      <div><strong>${COURSES.length} cursos</strong><span>Riesgos críticos de planta</span></div>
-      <div><strong>Constancia con QR</strong><span>Verificable en línea por terceros</span></div>
-      <div><strong>12 meses de acceso</strong><span>Repase cuando lo necesite</span></div>
-      <div><strong>Pago con Wompi</strong><span>No guardamos datos de tarjetas</span></div>
-    </section>
-
-    <section class="sst-section">
-      <h2 class="sst-section-title">Cómo funciona</h2>
-      <ol class="sst-steps">
-        <li><span>1</span><strong>Elija y pague</strong><p>Cursos sueltos o paquetes con descuento. Recibe el acceso en su correo.</p></li>
-        <li><span>2</span><strong>Estudie paso a paso</strong><p>Módulos cortos, un caso real de accidente, prácticas y escenarios de decisión.</p></li>
-        <li><span>3</span><strong>Presente la evaluación</strong><p>Aprueba con ${MIN_SCORE} %. Las opciones cambian de orden en cada intento.</p></li>
-        <li><span>4</span><strong>Descargue su constancia</strong><p>PDF con temario, puntaje, datos del formador y código de verificación.</p></li>
-      </ol>
+    <section class="sst-trust" aria-label="Cómo funciona">
+      <div><strong>1. Elija su curso</strong><span>${COURSES.length} cursos y paquetes · 12 meses de acceso</span></div>
+      <div><strong>2. Practique en línea</strong><span>Escenas reales, simuladores y casos de planta</span></div>
+      <div><strong>3. Presente el examen</strong><span>Aprueba con ${MIN_SCORE} % desde celular o PC</span></div>
+      <div><strong>4. Constancia con QR</strong><span>PDF inmediato verificable por empresas</span></div>
     </section>
 
     <section class="sst-section" id="cursos">
@@ -185,14 +181,40 @@ function waLink() {
   return `<a class="sst-wa-float" href="https://wa.me/${n}?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener" aria-label="Cotizar para empresas por WhatsApp">Cotizar para empresas</a>`;
 }
 
+const COURSE_SHORT_DESC = {
+  'loto-bloqueo': 'Aprende a aislar, bloquear, etiquetar y verificar energía cero paso a paso.',
+  'trabajo-caliente': 'Evalúa el área, mide atmósferas inflamables y controla chispas con permiso seguro.',
+  'observador-fuego': 'Domina el rol del vigía, el uso de extintores y la guardia posterior de 60 minutos.',
+  'sustancias-quimicas': 'Interpreta etiquetas SGA, fichas FDS, matriz de compatibilidad y atención a derrames.',
+  'riesgo-electrico-no-electricistas': 'Identifica peligros eléctricos, respeta distancias seguras y actúa ante emergencias.',
+  'herramientas-electricas': 'Inspecciona guardas, cables y EPP antes de operar pulidoras, taladros y sierras.',
+  'mecanica-basica': 'Previene atrapamientos en partes móviles usando guardas, bloqueo y herramientas seguras.',
+  'aislamiento-energias-avanzado': 'Aplica doble bloqueo y purga, bridas ciegas y cajas grupales en sistemas complejos.',
+  'seguridad-soldadura-corte': 'Controla cilindros de gas, humos metálicos, radiación del arco y retroceso de llama.',
+  'aparejador-cargas': 'Calcula ángulos de eslingas, controla el centro de gravedad y dirige izajes seguros.',
+  'almacenamiento-apilamiento-cargas': 'Organiza estanterías, respeta capacidades máximas y mantén pasillos despejados.',
+  andamiero: 'Verifica bases, barandas, plataformas completas y tarjeta verde antes de subir.',
+  'manejo-amoniaco': 'Detecta fugas de NH₃, evacua según el viento y aplica descontaminación de emergencia.',
+  'manipulacion-alimentos': 'Controla higiene, temperaturas seguras y prevención de contaminación cruzada (BPM).',
+  copasst: 'Lidera inspecciones planeadas, investigación de accidentes y vigilancia del SG-SST.',
+  'comite-convivencia-laboral': 'Gestiona quejas con confidencialidad, escucha imparcial y acuerdos de convivencia.'
+};
+
 function courseCard(c, opts) {
+  const shortDesc = COURSE_SHORT_DESC[c.id] || c.summary;
   return `
     <article class="sst-course" data-course-card="${esc(c.id)}">
-      <div class="sst-course-band" data-cat="${esc(c.category)}"><span class="sst-course-icon">${iconFor(c)}</span><span class="sst-course-hours">${fmtHours(c.hours, true)} · ${c.modules.length} módulos</span></div>
+      <div class="sst-course-thumb">
+        <img src="${esc(coursePhoto(c.id))}" alt="${esc(c.title)}" loading="lazy" />
+        <div class="sst-course-thumb-meta">
+          <span class="sst-course-icon">${iconFor(c)}</span>
+          <span class="sst-course-hours">${fmtHours(c.hours, true)} · ${c.modules.length} módulos</span>
+        </div>
+      </div>
       <div class="sst-course-body">
         <span class="iui-badge ${categoryClass(c)}">${esc(categoryShort(c))}</span>
         <h3 class="sst-course-title">${esc(c.title)}</h3>
-        <p class="sst-course-summary">${esc(c.summary)}</p>
+        <p class="sst-course-summary">${esc(shortDesc)}</p>
         <div class="sst-course-foot">
           <strong class="sst-price" data-price="${esc(c.id)}"></strong>
           <div class="sst-course-actions">
@@ -251,6 +273,8 @@ export async function renderCourseInfo(courseId) {
         </aside>
       </div>
 
+      ${renderCourseScene(c.id)}
+
       <section class="sst-section">
         <h2 class="sst-section-title">Qué va a aprender</h2>
         <ol class="sst-syllabus">${c.modules.map((m) => `<li><strong>${esc(cleanTitle(m.title))}</strong>${keyLine(m)}</li>`).join('')}</ol>
@@ -272,6 +296,7 @@ export async function renderCourseInfo(courseId) {
       </section>
     </article>`;
   bindCartButtons(root());
+  bindInteractiveVisuals(root());
   const p = await prices();
   const el = root().querySelector('.sst-buy-price');
   if (el) el.textContent = p[c.id] ? fmtCOP(p[c.id]) : 'Consulte en la tienda';
@@ -404,6 +429,7 @@ function stepsOf(c) {
   c.modules.forEach((m, i) => steps.push({ id: 'm' + i, title: cleanTitle(m.title), module: i }));
   if ((c.scenarios || []).length) steps.push({ id: 'escenarios', title: 'Escenarios de decisión' });
   if (c.project) steps.push({ id: 'proyecto', title: 'Proyecto final' });
+  steps.push({ id: 'permiso', title: 'Permiso de trabajo y ATS' });
   steps.push({ id: 'cierre', title: 'Lista de verificación' });
   steps.push({ id: 'evaluacion', title: 'Evaluación final' });
   return steps;
@@ -469,7 +495,7 @@ export async function renderCourse(courseId, stepId) {
   let current = steps.find((s) => s.id === stepId);
   if (!current) current = steps.find((s) => !stepDone(c, s, st) && s.id !== 'evaluacion') || steps[steps.length - 1];
   const idx = steps.indexOf(current);
-  if (current.id === 'caso' || current.id === 'cierre') markVisited(courseId, current.id);
+  if (current.id === 'caso' || current.id === 'cierre' || current.id === 'permiso') markVisited(courseId, current.id);
   st.visited = visitedMap(courseId);
 
   const doneCount = steps.filter((s) => stepDone(c, s, st)).length;
@@ -526,6 +552,7 @@ function stepHtml(c, step, st) {
       <span class="sst-step-kicker">Para empezar</span>
       <h2 class="sst-step-title">Un caso real</h2>
       <div class="sst-case-box"><p>${esc(c.fieldCase || '')}</p>${c.failureAnalysis ? `<p class="sst-case-why"><strong>¿Qué falló?</strong> ${esc(c.failureAnalysis.replace(/^Falla raíz:\s*/i, ''))}</p>` : ''}</div>
+      ${renderCourseScene(c.id)}
       <p>Tenga este caso presente mientras estudia: cada módulo explica una de las barreras que habrían evitado el accidente.</p>
       <div class="iui-alert ${c.category === 'regimen_especial' ? 'iui-alert-warning' : 'iui-alert-info'}">${esc(c.legalNotice)}</div>`;
   }
@@ -538,7 +565,11 @@ function stepHtml(c, step, st) {
     return `
       <span class="sst-step-kicker">Módulo ${i + 1} de ${c.modules.length}</span>
       <h2 class="sst-step-title">${esc(cleanTitle(m.title))}</h2>
-      <div class="sst-prose">${richText(m.content)}</div>
+      ${renderModuleVisual(c, i)}
+      <details class="sst-prose-details">
+        <summary>Ver lectura completa de apoyo (${esc(cleanTitle(m.title))})</summary>
+        <div class="sst-prose">${richText(m.content)}</div>
+      </details>
       ${m.keyPoints?.length ? `<div class="sst-keypoints"><strong>Puntos clave</strong><ul>${m.keyPoints.map((k) => `<li>${esc(k)}</li>`).join('')}</ul></div>` : ''}
       ${m.practice ? `
         <div class="sst-practice" id="practice-box">
@@ -563,6 +594,7 @@ function stepHtml(c, step, st) {
     return `
       <span class="sst-step-kicker">Aplique lo aprendido</span>
       <h2 class="sst-step-title">Escenarios de decisión</h2>
+      ${renderCourseSimulator(c.id)}
       <p class="iui-muted">Situaciones de planta. Elija lo que haría usted. Cada escenario se responde una sola vez y recibe retroalimentación.</p>
       ${(c.scenarios || []).map((sc, i) => `
         <div class="sst-practice">
@@ -586,10 +618,18 @@ function stepHtml(c, step, st) {
       ${workHtml({ title: '', prompt: '', fields: p.sections }, saved, 'project', 0, p.rubric)}`;
   }
 
+  if (step.id === 'permiso') {
+    return `
+      <span class="sst-step-kicker">Herramienta práctica incluida en el curso</span>
+      <h2 class="sst-step-title">Permiso de trabajo y ATS</h2>
+      <div id="course-permit-host"></div>`;
+  }
+
   if (step.id === 'cierre') {
     return `
       <span class="sst-step-kicker">Para su puesto de trabajo</span>
       <h2 class="sst-step-title">Lista de verificación</h2>
+      ${renderMasterySummary(c, st)}
       <p class="iui-muted">Úsela antes de cada tarea. Puede marcarla aquí como ejercicio; no se guarda.</p>
       <ul class="sst-checklist">${(c.checklist || []).map((k, i) => `<li><label><input type="checkbox" id="ck-${i}" /> <span>${esc(k)}</span></label></li>`).join('')}</ul>
       ${c.onSiteClosure ? `<div class="iui-alert iui-alert-info"><strong>Cierre práctico en su empresa:</strong> ${esc(c.onSiteClosure)}</div>` : ''}`;
@@ -628,6 +668,9 @@ function stepHtml(c, step, st) {
 }
 
 function bindStep(c, step, st) {
+  bindInteractiveVisuals(document.getElementById('step-panel'));
+  const permitHost = document.getElementById('course-permit-host');
+  if (permitHost) renderPermitsGuide(permitHost);
   // Lectura: el temporizador empieza cuando el módulo se abre
   const readBtn = document.getElementById('btn-read');
   if (readBtn) {

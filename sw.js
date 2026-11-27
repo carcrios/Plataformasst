@@ -1,6 +1,6 @@
 // Service worker: red primero para la app (así una actualización llega sin quedar atrapada en caché).
 // Las llamadas a Apps Script, Wompi y CDNs externos no se cachean.
-const CACHE_NAME = 'academia-sst-co-v15';
+const CACHE_NAME = 'academia-sst-co-v16';
 const ASSETS = [
   './',
   './index.html',
@@ -15,6 +15,7 @@ const ASSETS = [
   './js/catalog.js',
   './js/certificate.js',
   './js/dom.js',
+  './js/interactive-visuals.js',
   './js/sample-certificate.js',
   './js/permits-guide.js',
   './js/legal.js',

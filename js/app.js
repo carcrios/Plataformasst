@@ -32,7 +32,7 @@ function setNav() {
   let links;
   if (isAdmin()) links = [['#catalog', 'Cursos'], ['#admin', 'Administración'], ['#system-ops', 'Sistema']];
   else if (s) links = [['#catalog', 'Mis cursos'], ['#store', cart], ['#orders', 'Mis compras'], ['#certs', 'Constancias']];
-  else links = [['#catalog', 'Cursos'], ['#permisos', 'Guía de permisos'], ['#store', cart], ['#verify', 'Verificar constancia']];
+  else links = [['#catalog', 'Cursos'], ['#store', cart], ['#verify', 'Verificar constancia']];
   const here = '#' + (window.location.hash.replace(/^#/, '').split('/')[0] || 'catalog');
   nav().innerHTML =
     links.map(([href, label]) => `<a href="${href}" class="iui-nav-link${href === here ? ' active' : ''}" ${href === here ? 'aria-current="page"' : ''}>${label}</a>`).join('') +

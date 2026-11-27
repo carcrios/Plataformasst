@@ -435,3 +435,751 @@
 .sst-wordcount.ok { color: #047857; }
 .sst-rubric { border: 1px solid var(--iui-border, #e2e8f0); border-radius: 0.6rem; padding: 0.75rem 0.9rem; display: flex; flex-direction: column; gap: 0.4rem; background: #fff; }
 .sst-work-actions { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+
+
+/* ---------- Imágenes y diagramas SVG interactivos ---------- */
+.sst-iv-card {
+  background: var(--iui-surface, #ffffff);
+  border: 1px solid var(--iui-border, #e2e8f0);
+  border-radius: 14px;
+  padding: 1.15rem;
+  margin: 1.1rem 0 1.4rem;
+  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.05);
+}
+.sst-iv-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.85rem;
+}
+.sst-iv-badge {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--iv-dark, #1e3a8a);
+  background: var(--iv-soft, #dbeafe);
+  padding: 0.22rem 0.6rem;
+  border-radius: 999px;
+}
+.sst-iv-title {
+  margin: 0.35rem 0 0.2rem;
+  font-size: 1.08rem;
+  color: var(--sst-ink, #0b1b33);
+}
+.sst-iv-sub {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--iui-text-secondary, #475569);
+}
+.sst-iv-counter {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--iv-dark, #1e3a8a);
+  background: var(--iv-soft, #dbeafe);
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.sst-iv-stage {
+  border-radius: 10px;
+  overflow: hidden;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+.sst-iv-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.sst-iv-pin {
+  cursor: pointer;
+  outline: none;
+}
+.sst-iv-pin .sst-iv-pulse {
+  fill: var(--iv-accent, #2563eb);
+  opacity: 0.22;
+  transition: opacity 0.2s ease;
+}
+.sst-iv-pin.active .sst-iv-pulse {
+  opacity: 0.42;
+}
+.sst-iv-pin .sst-iv-dot {
+  fill: var(--iv-accent, #2563eb);
+  stroke: #ffffff;
+  stroke-width: 2.5;
+  transition: fill 0.15s ease;
+}
+.sst-iv-pin.visited .sst-iv-dot {
+  fill: #16a34a;
+}
+.sst-iv-pin.active .sst-iv-dot {
+  fill: var(--iv-dark, #1e3a8a);
+  stroke: #fef08a;
+  stroke-width: 3;
+}
+.sst-iv-pin .sst-iv-num {
+  fill: #ffffff;
+  font-size: 12px;
+  font-weight: 800;
+  pointer-events: none;
+}
+.sst-iv-nodebox {
+  fill: #ffffff;
+  stroke: #cbd5e1;
+  stroke-width: 2;
+  transition: stroke 0.15s ease, fill 0.15s ease;
+}
+.sst-iv-pin.active .sst-iv-nodebox {
+  fill: var(--iv-soft, #dbeafe);
+  stroke: var(--iv-accent, #2563eb);
+  stroke-width: 2.5;
+}
+.sst-iv-nodelabel {
+  fill: #0f172a;
+  font-size: 10px;
+  font-weight: 700;
+  pointer-events: none;
+}
+.sst-iv-detail {
+  margin-top: 0.9rem;
+  padding: 0.9rem 1rem;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+.sst-iv-detail-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.55rem;
+}
+.sst-iv-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+.sst-iv-box {
+  padding: 0.65rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.88rem;
+}
+.sst-iv-box span {
+  display: block;
+  font-size: 0.74rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 0.25rem;
+}
+.sst-iv-box p { margin: 0; line-height: 1.42; }
+.sst-iv-risk { background: #fef2f2; border: 1px solid #fecaca; color: #7f1d1d; }
+.sst-iv-ctrl { background: #f0fdf4; border: 1px solid #bbf7d0; color: #14532d; }
+.sst-iv-mod-body {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #1e293b;
+}
+.sst-iv-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.75rem;
+}
+.sst-iv-pill {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+  border-radius: 999px;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.sst-iv-pill.active {
+  background: var(--iv-accent, #2563eb);
+  border-color: var(--iv-accent, #2563eb);
+  color: #ffffff;
+}
+.sst-iv-nav-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+.sst-iv-dots {
+  display: flex;
+  gap: 0.4rem;
+}
+.sst-iv-dotbtn {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  border: none;
+  background: #cbd5e1;
+  cursor: pointer;
+  padding: 0;
+}
+.sst-iv-dotbtn.active {
+  background: var(--iv-accent, #2563eb);
+  transform: scale(1.2);
+}
+
+/* Lectura extensa colapsable en módulos */
+.sst-prose-details {
+  margin: 0.85rem 0 1.2rem;
+  border: 1px solid var(--iui-border, #e2e8f0);
+  border-radius: 10px;
+  background: var(--iui-surface, #ffffff);
+  padding: 0.65rem 0.95rem;
+}
+.sst-prose-details > summary {
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--iui-primary-600, #1d4ed8);
+  list-style: none;
+}
+.sst-prose-details > summary::-webkit-details-marker { display: none; }
+.sst-prose-details > summary::before {
+  content: '▸ ';
+  display: inline-block;
+  margin-right: 0.35rem;
+}
+.sst-prose-details[open] > summary::before { content: '▾ '; }
+.sst-prose-details[open] > summary { margin-bottom: 0.75rem; }
+
+@media (max-width: 640px) {
+  .sst-iv-grid { grid-template-columns: 1fr; }
+}
+
+
+/* ---------- Simuladores interactivos y Tarjeta de Dominio ---------- */
+.sst-iv-counter.done {
+  background: #dcfce7;
+  color: #166534;
+}
+.sst-sim-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+.sst-sim-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+.sst-sim-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+.sst-sim-range {
+  width: 100%;
+  accent-color: var(--iv-accent, #2563eb);
+  cursor: pointer;
+}
+.sst-sim-meter {
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  font-size: 0.9rem;
+}
+.sst-sim-meter.ok {
+  background: #f0fdf4;
+  border-color: #86efac;
+  color: #14532d;
+}
+.sst-sim-meter.warn {
+  background: #fffbeb;
+  border-color: #fde047;
+  color: #854d0e;
+}
+.sst-sim-meter.danger {
+  background: #fef2f2;
+  border-color: #fca5a5;
+  color: #991b1b;
+}
+.sst-sim-readout {
+  font-size: 1.25rem;
+  font-weight: 800;
+  margin-bottom: 0.2rem;
+}
+.sst-seq-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+  gap: 0.55rem;
+  margin-bottom: 0.75rem;
+}
+.sst-seq-btn {
+  text-align: left;
+  padding: 0.65rem 0.8rem;
+  border-radius: 10px;
+  border: 1.5px solid #cbd5e1;
+  background: #ffffff;
+  color: #0f172a;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.sst-seq-btn:hover:not(:disabled) {
+  border-color: var(--iv-accent, #2563eb);
+  background: var(--iv-soft, #dbeafe);
+}
+.sst-seq-btn.done {
+  background: #dcfce7;
+  border-color: #16a34a;
+  color: #14532d;
+  cursor: default;
+}
+.sst-mastery-card {
+  background: linear-gradient(135deg, #f0fdf4 0%, #eff6ff 100%);
+  border: 1px solid #bbf7d0;
+  border-radius: 14px;
+  padding: 1.1rem;
+  margin: 0.8rem 0 1.25rem;
+}
+.sst-mastery-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+.sst-mastery-pct {
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: #15803d;
+}
+.sst-mastery-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.7rem;
+}
+.sst-mbadge {
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+}
+.sst-mbadge.ok {
+  background: #dcfce7;
+  border-color: #86efac;
+  color: #166534;
+}
+.sst-pocket-list {
+  margin: 0 0 0.85rem;
+  padding-left: 1.25rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+
+/* ---------- Portada profesional (Hero Panel) ---------- */
+.sst-pro-panel {
+  background: linear-gradient(155deg, #0b1b33 0%, #1e293b 100%);
+  color: #f8fafc;
+  border-radius: 18px;
+  padding: 1.4rem;
+  box-shadow: 0 18px 40px rgba(11, 27, 51, 0.18);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+.sst-pro-panel-top {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #93c5fd;
+  margin-bottom: 1.1rem;
+}
+.sst-pro-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: #22c55e;
+  box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.22);
+}
+.sst-pro-features {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+.sst-pro-features li {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 0.75rem 0.85rem;
+}
+.sst-pro-ico {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(59, 130, 246, 0.22);
+  color: #93c5fd;
+  display: inline-grid;
+  place-items: center;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+.sst-pro-features strong {
+  display: block;
+  font-size: 0.92rem;
+  color: #ffffff;
+  margin-bottom: 0.15rem;
+}
+.sst-pro-features span {
+  display: block;
+  font-size: 0.8rem;
+  color: #cbd5e1;
+  line-height: 1.38;
+}
+.sst-pro-panel-foot {
+  margin-top: 1.05rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
+.sst-pro-panel-foot a {
+  color: #93c5fd;
+  text-decoration: none;
+  font-weight: 600;
+}
+.sst-pro-panel-foot a:hover {
+  text-decoration: underline;
+}
+
+
+/* ---------- Escena fotográfica profesional + Pines interactivos ---------- */
+.sst-iv-photo-stage {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #0f172a;
+  aspect-ratio: 16 / 9;
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.15);
+}
+.sst-iv-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.sst-iv-photo-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.08) 0%, rgba(15, 23, 42, 0.35) 100%);
+  pointer-events: none;
+}
+.sst-photo-pin {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 2.5px solid #ffffff;
+  background: var(--iv-accent, #2563eb);
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 0.85rem;
+  display: inline-grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.45);
+  transition: transform 0.16s ease, background 0.16s ease;
+  z-index: 2;
+}
+.sst-photo-pin:hover,
+.sst-photo-pin.active {
+  transform: translate(-50%, -50%) scale(1.14);
+  background: #0b1b33;
+  border-color: #fde047;
+  z-index: 4;
+}
+.sst-photo-pin.visited:not(.active) {
+  background: #16a34a;
+}
+.sst-photo-pin-ring {
+  position: absolute;
+  inset: -7px;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.75);
+  animation: sstPulse 2s infinite;
+  pointer-events: none;
+}
+.sst-photo-pin-tip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(11, 27, 51, 0.94);
+  color: #ffffff;
+  font-size: 0.74rem;
+  font-weight: 600;
+  white-space: nowrap;
+  padding: 0.28rem 0.55rem;
+  border-radius: 6px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+.sst-photo-pin:hover .sst-photo-pin-tip,
+.sst-photo-pin.active .sst-photo-pin-tip {
+  opacity: 1;
+}
+@keyframes sstPulse {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  70% { transform: scale(1.3); opacity: 0; }
+  100% { transform: scale(1.3); opacity: 0; }
+}
+
+/* ---------- Ruta visual corporativa por módulo ---------- */
+.sst-mod-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.55rem;
+}
+.sst-mod-step {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  text-align: left;
+  padding: 0.65rem 0.75rem;
+  border-radius: 10px;
+  border: 1.5px solid #e2e8f0;
+  background: #ffffff;
+  color: #1e293b;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.sst-mod-step:hover {
+  border-color: var(--iv-accent, #2563eb);
+  background: #f8fafc;
+}
+.sst-mod-step.active {
+  border-color: var(--iv-accent, #2563eb);
+  background: var(--iv-soft, #dbeafe);
+  color: var(--iv-dark, #1e3a8a);
+}
+.sst-mod-step-num {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  color: #334155;
+  font-size: 0.78rem;
+  font-weight: 800;
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.sst-mod-step.visited .sst-mod-step-num {
+  background: #16a34a;
+  color: #ffffff;
+}
+.sst-mod-step.active .sst-mod-step-num {
+  background: var(--iv-accent, #2563eb);
+  color: #ffffff;
+}
+.sst-mod-step-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+@keyframes sstFlash {
+  0% { background: var(--iv-soft, #dbeafe); transform: translateY(-2px); }
+  100% { background: #f8fafc; transform: translateY(0); }
+}
+.sst-iv-flash {
+  animation: sstFlash 0.35s ease-out;
+}
+
+
+/* ---------- Ajuste limpio del contenedor Hero Card ---------- */
+.sst-hero-card-clean {
+  background: none !important;
+  padding: 0 !important;
+  transform: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+.sst-pro-panel {
+  padding: 0;
+  overflow: hidden;
+  border-radius: 18px;
+}
+.sst-pro-banner {
+  position: relative;
+  height: 155px;
+  overflow: hidden;
+  background: #0f172a;
+}
+.sst-pro-banner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.sst-pro-banner-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(11, 27, 51, 0.15) 0%, rgba(11, 27, 51, 0.92) 100%);
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+  padding: 0.9rem 1.25rem;
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #93c5fd;
+}
+.sst-pro-panel-body {
+  padding: 1.15rem 1.25rem 1.25rem;
+}
+.sst-pro-ico {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+/* ---------- Tarjeta Hero ligera + Optimización Celular y Tablet ---------- */
+.sst-pro-banner-tall {
+  height: 270px;
+}
+.sst-pro-panel-foot-clean {
+  margin-top: 0;
+  padding: 0.9rem 1.2rem;
+  border-top: none;
+  justify-content: center;
+  text-align: center;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+/* Tablet y móvil (≤ 900px) */
+@media (max-width: 900px) {
+  .sst-hero {
+    grid-template-columns: 1fr;
+    gap: 1.4rem;
+    padding: 0.75rem 0 1.5rem;
+  }
+  .sst-pro-banner-tall {
+    height: 210px;
+  }
+  .sst-hero-cta {
+    flex-direction: column;
+  }
+  .sst-hero-cta .iui-btn {
+    width: 100%;
+    justify-content: center;
+    min-height: 46px;
+  }
+  .sst-iv-card {
+    padding: 0.9rem;
+    border-radius: 12px;
+  }
+  .sst-photo-pin {
+    width: 40px;
+    height: 40px;
+    font-size: 0.92rem;
+  }
+  .sst-photo-pin-tip {
+    display: none;
+  }
+  .sst-iv-pills {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 0.35rem;
+  }
+  .sst-iv-pill {
+    flex: 0 0 auto;
+    min-height: 38px;
+  }
+  .sst-mod-steps {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 0.35rem;
+  }
+  .sst-mod-step {
+    flex: 0 0 78%;
+    scroll-snap-align: start;
+    min-height: 48px;
+  }
+  .sst-sim-range {
+    height: 32px;
+  }
+  .sst-seq-btn,
+  .sst-step-nav .iui-btn {
+    min-height: 46px;
+  }
+}
+
+
+/* ---------- Tarjetas de cursos con fotografía real y texto compacto ---------- */
+.sst-course-thumb {
+  position: relative;
+  height: 155px;
+  overflow: hidden;
+  background: #0f172a;
+}
+.sst-course-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.25s ease;
+}
+.sst-course:hover .sst-course-thumb img {
+  transform: scale(1.04);
+}
+.sst-course-thumb-meta {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(11, 27, 51, 0.12) 0%, rgba(11, 27, 51, 0.78) 100%);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0.7rem 0.9rem;
+  color: #ffffff;
+}
+.sst-course-summary-clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

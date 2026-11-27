@@ -4,8 +4,9 @@ import { esc, root, toast } from './dom.js';
  * Módulo interactivo: Cómo llenar correctamente un Permiso de Trabajo y ATS
  * según buenas prácticas y normatividad colombiana (Decreto 1072/2015, Res. 4272/2021, NFPA 51B).
  */
-export function renderPermitsGuide() {
-  root().innerHTML = `
+export function renderPermitsGuide(container) {
+  const host = container || root();
+  host.innerHTML = `
     <section style="display:flex; flex-direction:column; gap:1.25rem; max-width:960px; margin:0 auto;">
       <div class="iui-card">
         <span class="iui-badge iui-badge-primary" style="width:fit-content;">Guía Práctica de Campo · Colombia</span>
