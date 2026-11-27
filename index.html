@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es-CO">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#1d4ed8" />
+  <meta name="description" content="Plataforma virtual de formación teórica en SST y competencias técnicas con normatividad colombiana vigente, constancias PDF y verificación QR." />
+  <title>Academia SST Colombia — Cursos virtuales de seguridad industrial con constancia verificable</title>
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="icon" href="./favicon.ico" sizes="32x32" />
+  <link rel="icon" type="image/png" href="./favicon.png" />
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./css/interaui.css" />
+  <link rel="stylesheet" href="./css/sst.css" />
+  <!-- PDF y QR: copias locales (vendor/LICENCIAS.txt), sin dependencias de CDN -->
+  <script defer src="./vendor/jspdf.umd.min.js"></script>
+  <script defer src="./vendor/qrcode.min.js"></script>
+</head>
+<body>
+  <a class="iui-skip-link" href="#main-content">Saltar al contenido principal</a>
+
+  <header class="iui-header" role="banner">
+    <div class="iui-container iui-header-inner">
+      <a href="#catalog" class="iui-brand" id="brand-link" aria-label="Inicio Academia SST Colombia">
+        <span class="iui-brand-mark" aria-hidden="true">SST</span>
+        <span>Academia SST Colombia</span>
+      </a>
+      <button class="sst-menu-btn" id="menu-btn" aria-controls="main-nav" aria-expanded="false" aria-label="Abrir menú">
+        <span></span><span></span><span></span>
+      </button>
+      <nav class="iui-nav" aria-label="Navegación principal" id="main-nav"></nav>
+    </div>
+  </header>
+
+  <main id="main-content" class="iui-main" tabindex="-1">
+    <div class="iui-container" id="app-root">
+      <!-- Estado de carga inicial (InteraUI Skeleton) -->
+      <div class="iui-card" aria-busy="true" aria-label="Cargando plataforma">
+        <div class="iui-skeleton" style="height: 28px; width: 45%;"></div>
+        <div class="iui-skeleton" style="height: 16px; width: 80%;"></div>
+        <div class="iui-skeleton" style="height: 120px; width: 100%;"></div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="iui-footer" role="contentinfo">
+    <div class="iui-container sst-footer">
+      <div class="sst-footer-brand">
+        <strong>Academia SST Colombia</strong>
+        <p class="iui-xs iui-muted">Formación teórica en seguridad y salud en el trabajo con normativa colombiana. Emite constancias de capacitación teórica: no reemplazan el entrenamiento práctico en sitio, la aptitud médica ni el permiso de trabajo.</p>
+      </div>
+      <nav class="sst-footer-links" aria-label="Enlaces legales">
+        <a href="#verify">Verificar constancia</a>
+        <a href="#legal-terms">Términos de uso</a>
+        <a href="#legal-privacy">Privacidad (Ley 1581)</a>
+        <a href="#legal-refunds">Devoluciones y retracto</a>
+        <a href="#legal-ip">Propiedad intelectual</a>
+        <a href="#legal-security">Seguridad</a>
+      </nav>
+    </div>
+  </footer>
+
+  <div id="toast-stack" class="iui-toast-stack" aria-live="polite" aria-atomic="true"></div>
+
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>
