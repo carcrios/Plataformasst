@@ -4,15 +4,15 @@ export const APP_CONFIG = {
 
   // URL de la Web App de Apps Script (backend/Code.gs). Vacía = modo demostración:
   // se ve el catálogo, pero no hay tienda, examen ni constancias.
-  APPS_SCRIPT_URL: '',
+  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbyMNbX0Acu5s8mphx9tp9cYRbIbg-U638iBMmgtQe1GytVJEhWpjkhKc-MuybZyKiwa/exec',
 
   // Responsable del tratamiento de datos (Ley 1581 de 2012). COMPLETAR antes de vender.
   responsable: {
-    razonSocial: '[CONFIGURAR razón social]',
-    nit: '[CONFIGURAR NIT]',
-    domicilio: '[CONFIGURAR dirección]',
-    correo: '[CONFIGURAR correo de contacto]',
-    telefono: '[CONFIGURAR teléfono]'
+    razonSocial: '[CARLOS RIOS]',
+    nit: '[1018455016]',
+    domicilio: '[CALLE 123 FALSA]',
+    correo: '[CARCRIOS@GMAIL.COM]',
+    telefono: '[3237157915]'
   },
 
   // Versión de la Política de Privacidad y de los Términos. Subirla obliga a aceptar de nuevo.
@@ -21,7 +21,7 @@ export const APP_CONFIG = {
 
   // Número de WhatsApp para cotizaciones de empresas, con indicativo (ej. '573001234567').
   // Vacío = no se muestra el botón.
-  WHATSAPP_NUMBER: '',
+  WHATSAPP_NUMBER: '573237157915',
 
   // Póngalo en true solo cuando un abogado haya revisado la política de datos, los términos,
   // el retracto y la garantía. Mientras sea false, esas páginas muestran un aviso de borrador.
