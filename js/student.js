@@ -5,8 +5,7 @@ import { APP_CONFIG } from './config.js';
 import { COURSES, LEGAL_CATEGORIES } from './catalog.js';
 import { esc, fmtCOP, fmtDate, fmtHours, richText, readSeconds, cleanTitle, root, toast } from './dom.js';
 import { addToCart, getCart } from './store.js';
-import { generateSampleCertificatePDF } from './sample-certificate.js';
-import { renderCourseScene, renderModuleVisual, renderCourseSimulator, renderMasterySummary, bindInteractiveVisuals, coursePhoto } from './interactive-visuals.js';
+import { renderCourseScene, renderModuleVisual, renderModuleVideo, renderMiniGame, renderCourseSimulator, renderMasterySummary, bindInteractiveVisuals, coursePhoto } from './interactive-visuals.js';
 import { renderPermitsGuide } from './permits-guide.js';
 
 export const byId = Object.fromEntries(COURSES.map((c) => [c.id, c]));
@@ -114,6 +113,47 @@ export async function renderLanding() {
       <p class="sst-empty-filter" id="no-results" hidden>No hay cursos con ese criterio.</p>
     </section>
 
+    <section class="sst-section sst-accidents">
+      <div class="sst-section-head" style="margin-bottom:1rem;">
+        <div>
+          <span class="sst-eyebrow" style="background:#fef2f2;color:#b91c1c;">Prevención basada en hechos</span>
+          <h2 class="sst-section-title" style="margin-top:0.4rem;">Accidentes reales que se pudieron evitar</h2>
+        </div>
+      </div>
+      <div class="sst-acc-grid">
+        <article class="sst-acc-card">
+          <img src="./img/scenes/scene-fire.jpg" alt="Explosión en tubería con vapores residuales" loading="lazy" />
+          <div class="sst-acc-body">
+            <span class="sst-acc-tag">Trabajo en Caliente</span>
+            <h3>Explosión al cortar tubería "vacía"</h3>
+            <p>Una pulidora encendió vapores residuales de solvente dentro de un ducto sin purgar ni medir % LEL.</p>
+            <div class="sst-acc-lesson"><strong>Barrera faltante:</strong> Aislamiento, purga y medición 0 % LEL.</div>
+            <a class="iui-btn iui-btn-secondary iui-btn-sm" href="#info/trabajo-caliente">Ver cómo evitarlo →</a>
+          </div>
+        </article>
+        <article class="sst-acc-card">
+          <img src="./img/scenes/scene-loto.jpg" alt="Arranque inesperado sin bloqueo LOTO" loading="lazy" />
+          <div class="sst-acc-body">
+            <span class="sst-acc-tag">Energías Peligrosas (LOTO)</span>
+            <h3>Arranque inesperado en mantenimiento</h3>
+            <p>Un técnico intervino una máquina apagada solo desde el botón de paro; otro turno la encendió desde el tablero.</p>
+            <div class="sst-acc-lesson"><strong>Barrera faltante:</strong> Candado personal y prueba de energía cero.</div>
+            <a class="iui-btn iui-btn-secondary iui-btn-sm" href="#info/loto-bloqueo">Ver cómo evitarlo →</a>
+          </div>
+        </article>
+        <article class="sst-acc-card">
+          <img src="./img/scenes/scene-load.jpg" alt="Falla de eslinga en izaje de carga" loading="lazy" />
+          <div class="sst-acc-body">
+            <span class="sst-acc-tag">Izaje de Cargas</span>
+            <h3>Caída de carga por ángulo crítico</h3>
+            <p>Al izar con eslingas muy abiertas (menor a 45°), la tensión superó la capacidad nominal y rompió un ramal.</p>
+            <div class="sst-acc-lesson"><strong>Barrera faltante:</strong> Ángulo ≥ 60° y zona de exclusión despejada.</div>
+            <a class="iui-btn iui-btn-secondary iui-btn-sm" href="#info/aparejador-cargas">Ver cómo evitarlo →</a>
+          </div>
+        </article>
+      </div>
+    </section>
+
     <section class="sst-section sst-company">
       <div>
         <h2 class="sst-section-title">¿Capacita a un equipo?</h2>
@@ -138,7 +178,6 @@ export async function renderLanding() {
     ${waLink()}`;
 
   document.getElementById('go-courses').addEventListener('click', () => document.getElementById('cursos').scrollIntoView({ behavior: 'smooth' }));
-  document.getElementById('btn-sample-pdf')?.addEventListener('click', () => generateSampleCertificatePDF());
 
   // Filtros
   let cat = '';
@@ -265,11 +304,16 @@ export async function renderCourseInfo(courseId) {
         </div>
         <aside class="sst-buy">
           <div class="sst-buy-price" data-price="${esc(c.id)}">&nbsp;</div>
-          <p class="iui-xs iui-muted">Precio en COP. Acceso por 12 meses.</p>
+          <p class="iui-xs iui-muted">Precio en COP · Pago seguro con PSE, Nequi o Tarjeta.</p>
+          <ul class="iui-xs" style="margin:0.4rem 0 0.9rem; padding-left:1.1rem; color:var(--iui-text-secondary); line-height:1.55;">
+            <li>Constancia PDF con QR verificable al aprobar</li>
+            <li>Acceso inmediato 24/7 durante 12 meses</li>
+            <li>Escenas reales, simuladores y guía de bolsillo</li>
+          </ul>
           ${hasAccess(c.id) && !isAdmin()
             ? `<a class="iui-btn iui-btn-primary sst-btn-block" href="#course/${esc(c.id)}">Ir al curso</a>`
             : `<button class="iui-btn iui-btn-primary sst-btn-block" data-add="${esc(c.id)}">Agregar al carrito</button>
-               <a class="iui-btn iui-btn-secondary sst-btn-block" href="#store">Ir a la tienda</a>`}
+               <a class="iui-btn iui-btn-secondary sst-btn-block" href="#store">Ir a pagar / ver paquetes →</a>`}
         </aside>
       </div>
 
@@ -311,7 +355,7 @@ function keyLine(m) {
 // PANEL DEL ALUMNO
 // =====================================================================
 function courseUnits(c) {
-  return c.modules.length * 2 + (c.scenarios || []).length + (c.workshops || []).length + (c.project ? 1 : 0) + 1;
+  return c.modules.length * 2 + (c.scenarios || []).length + 1;
 }
 
 function unitsDone(c, st) {
@@ -324,9 +368,6 @@ function unitsDone(c, st) {
     if (checked.has('practice:' + i)) n++;
   });
   (c.scenarios || []).forEach((_, i) => checked.has('scenario:' + i) && n++);
-  const works = st.works || {};
-  (c.workshops || []).forEach((_, i) => works['workshop:' + i] && n++);
-  if (c.project && works.project) n++;
   if (st.exam?.passed) n++;
   return n;
 }
@@ -356,7 +397,7 @@ export async function renderDashboard() {
       ${list === null ? `<div class="iui-alert iui-alert-warning">No pudimos consultar su avance en el servidor. Revise su conexión.</div>` : ''}
       ${active.length
         ? `<div class="sst-dash-grid">${active.map((x) => dashCard(byId[x.id], x)).join('')}</div>`
-        : `<div class="iui-empty">Cuando compre un curso aparecerá aquí.<br/><a href="#catalog" class="iui-btn iui-btn-primary" style="margin-top:1rem;">Ver cursos</a></div>`}
+        : `<div class="iui-empty">Cuando compre un curso aparecerá aquí.<br/><a href="#store" class="iui-btn iui-btn-primary" style="margin-top:1rem;">Ver cursos en la tienda</a></div>`}
       ${expired.length ? `
         <h2 class="iui-h2" style="margin-top:2rem;">Cursos vencidos</h2>
         <p class="iui-small iui-muted">La vigencia de 12 meses terminó. Su constancia sigue registrada; para volver a estudiar o presentar la evaluación, renueve el curso.</p>
@@ -394,7 +435,7 @@ function dashCard(c, st) {
       <h3 class="sst-course-title">${esc(c.title)}</h3>
       ${progressBar(pct, 'Avance del curso')}
       <p class="iui-xs iui-muted" style="margin:0.35rem 0 0;">${Math.round(pct)} % completado${st.expiresAt ? ` · Vigente hasta ${fmtDate(st.expiresAt)}` : ''}</p>
-      <div style="margin-top:0.85rem;">${cta}</div>
+      <div style="margin-top:0.85rem; display:flex; gap:0.5rem; flex-wrap:wrap;">${cta}<a class="iui-btn iui-btn-secondary" href="#course/${esc(c.id)}/m1">⚡ Repaso 60 s</a></div>
     </article>`;
 }
 
@@ -428,7 +469,6 @@ function stepsOf(c) {
   const steps = [{ id: 'caso', title: 'Caso real' }];
   c.modules.forEach((m, i) => steps.push({ id: 'm' + i, title: cleanTitle(m.title), module: i }));
   if ((c.scenarios || []).length) steps.push({ id: 'escenarios', title: 'Escenarios de decisión' });
-  if (c.project) steps.push({ id: 'proyecto', title: 'Proyecto final' });
   steps.push({ id: 'permiso', title: 'Permiso de trabajo y ATS' });
   steps.push({ id: 'cierre', title: 'Lista de verificación' });
   steps.push({ id: 'evaluacion', title: 'Evaluación final' });
@@ -438,11 +478,9 @@ function stepsOf(c) {
 function stepDone(c, step, st) {
   const read = new Set(st.modulesRead || []);
   const checked = new Set(st.checked || []);
-  const works = st.works || {};
   if (step.module !== undefined) {
-    return read.has(step.module) && checked.has('practice:' + step.module) && (!c.workshops?.[step.module] || !!works['workshop:' + step.module]);
+    return read.has(step.module) && checked.has('practice:' + step.module);
   }
-  if (step.id === 'proyecto') return !!works.project;
   if (step.id === 'escenarios') return (c.scenarios || []).every((_, i) => checked.has('scenario:' + i));
   if (step.id === 'evaluacion') return !!st.exam?.passed;
   return !!st.visited?.[step.id];
@@ -529,8 +567,8 @@ export async function renderCourse(courseId, stepId) {
         <div class="sst-step-panel" id="step-panel">
           ${stepHtml(c, current, st)}
           <div class="sst-step-nav">
-            ${idx > 0 ? `<a class="iui-btn iui-btn-ghost" href="#course/${esc(courseId)}/${esc(steps[idx - 1].id)}">← Anterior</a>` : '<span></span>'}
-            ${idx < steps.length - 1 ? `<a class="iui-btn iui-btn-primary" id="btn-next" href="#course/${esc(courseId)}/${esc(steps[idx + 1].id)}">Siguiente →</a>` : ''}
+            ${idx > 0 ? `<a class="iui-btn iui-btn-ghost" href="#course/${esc(courseId)}/${esc(steps[idx - 1].id)}">← Paso anterior</a>` : '<span></span>'}
+            ${idx < steps.length - 1 ? `<a class="iui-btn iui-btn-primary" id="btn-next" href="#course/${esc(courseId)}/${esc(steps[idx + 1].id)}">Siguiente paso →</a>` : ''}
           </div>
         </div>
       </div>
@@ -565,15 +603,18 @@ function stepHtml(c, step, st) {
     return `
       <span class="sst-step-kicker">Módulo ${i + 1} de ${c.modules.length}</span>
       <h2 class="sst-step-title">${esc(cleanTitle(m.title))}</h2>
+      <div class="sst-mod-guide"><strong>¿Qué hacer aquí?</strong> 1) Mira el micro-video o toca las tarjetas · 2) Responde la práctica · 3) Toca <em>"Marcar como leído"</em>.</div>
+      ${renderModuleVideo(c, i)}
       ${renderModuleVisual(c, i)}
+      ${i === 0 ? renderCourseSimulator(c.id) : ''}
+      ${i === 1 ? renderMiniGame(c) : ''}
       <details class="sst-prose-details">
-        <summary>Ver lectura completa de apoyo (${esc(cleanTitle(m.title))})</summary>
+        <summary>Abrir lectura completa de apoyo (opcional)</summary>
         <div class="sst-prose">${richText(m.content)}</div>
       </details>
-      ${m.keyPoints?.length ? `<div class="sst-keypoints"><strong>Puntos clave</strong><ul>${m.keyPoints.map((k) => `<li>${esc(k)}</li>`).join('')}</ul></div>` : ''}
       ${m.practice ? `
         <div class="sst-practice" id="practice-box">
-          <span class="sst-step-kicker">Práctica · se responde una sola vez</span>
+          <span class="sst-step-kicker">Pregunta de práctica · No afecta tu nota (solo para aprender)</span>
           <p class="sst-q">${esc(m.practice.q)}</p>
           ${answered
             ? `<p class="iui-small sst-ok">✓ Práctica respondida.</p>`
@@ -581,12 +622,11 @@ function stepHtml(c, step, st) {
                <button class="iui-btn iui-btn-primary iui-btn-sm" id="btn-practice">Verificar respuesta</button>`}
           <div id="practice-result" aria-live="polite"></div>
         </div>` : ''}
-      ${c.workshops?.[i] ? workHtml(c.workshops[i], st.works?.['workshop:' + i], 'workshop', i) : ''}
       <div class="sst-read-row">
         ${isRead
           ? `<span class="sst-ok">✓ Módulo leído</span>`
           : `<button class="iui-btn iui-btn-secondary" id="btn-read" disabled>Marcar como leído (<span id="read-left">${readSeconds(m.content)}</span> s)</button>
-             <span class="iui-xs iui-muted">El botón se habilita después del tiempo mínimo de lectura.</span>`}
+             <span class="iui-small iui-muted">Tómate unos segundos para revisar el módulo; el botón se activará automáticamente.</span>`}
       </div>`;
   }
 
@@ -630,7 +670,7 @@ function stepHtml(c, step, st) {
       <span class="sst-step-kicker">Para su puesto de trabajo</span>
       <h2 class="sst-step-title">Lista de verificación</h2>
       ${renderMasterySummary(c, st)}
-      <p class="iui-muted">Úsela antes de cada tarea. Puede marcarla aquí como ejercicio; no se guarda.</p>
+      <p class="iui-muted">Esta lista es un repaso para tu trabajo diario (no afecta tu avance para el examen).</p>
       <ul class="sst-checklist">${(c.checklist || []).map((k, i) => `<li><label><input type="checkbox" id="ck-${i}" /> <span>${esc(k)}</span></label></li>`).join('')}</ul>
       ${c.onSiteClosure ? `<div class="iui-alert iui-alert-info"><strong>Cierre práctico en su empresa:</strong> ${esc(c.onSiteClosure)}</div>` : ''}`;
   }
@@ -641,8 +681,6 @@ function stepHtml(c, step, st) {
     [`Prácticas respondidas`, c.modules.filter((_, i) => checked.has('practice:' + i)).length, c.modules.length],
     [`Escenarios respondidos`, (c.scenarios || []).filter((_, i) => checked.has('scenario:' + i)).length, (c.scenarios || []).length]
   ];
-  if ((c.workshops || []).length) reqs.push([`Talleres entregados`, c.workshops.filter((_, i) => st.works?.['workshop:' + i]).length, c.workshops.length]);
-  if (c.project) reqs.push([`Proyecto final entregado`, st.works?.project ? 1 : 0, 1]);
   const complete = reqs.every(([, a, b]) => a >= b);
   const ex = st.exam || {};
   const left = Math.max(0, (ex.maxAttempts || 3) - (ex.attemptsUsed || 0));
@@ -742,14 +780,14 @@ function workHtml(w, saved, kind, index, rubric) {
   const answers = saved?.answers || [];
   return `
     <form class="sst-work" data-kind="${kind}" data-index="${index}">
-      ${w.title ? `<span class="sst-step-kicker">Taller aplicado · se guarda en su expediente</span><h3 class="sst-work-title">${esc(w.title)}</h3>` : ''}
+      ${w.title ? `<span class="sst-step-kicker">Ejercicio práctico · Escribe con tus palabras (sin nota)</span><h3 class="sst-work-title">${esc(w.title)}</h3>` : ''}
       ${w.prompt ? `<p class="iui-small iui-muted" style="margin:0;">${esc(w.prompt)}</p>` : ''}
       ${saved ? `<p class="iui-small sst-ok">✓ Entregado el ${esc(fmtDate(saved.savedAt))}. Puede corregirlo y guardarlo de nuevo.</p>` : ''}
       ${w.fields.map((f, j) => `
         <label class="sst-work-field">
           <span class="sst-work-label">${esc(f.label)}</span>
           ${f.help ? `<span class="iui-xs iui-muted">${esc(f.help)}</span>` : ''}
-          <textarea class="iui-input" rows="${f.minWords >= 40 ? 6 : 4}" data-min="${f.minWords}" name="f${j}">${esc(answers[j] || '')}</textarea>
+          <textarea class="iui-input" rows="3" data-min="5" name="f${j}">${esc(answers[j] || '')}</textarea>
           <span class="sst-wordcount iui-xs" data-for="f${j}"></span>
         </label>`).join('')}
       ${rubric ? `

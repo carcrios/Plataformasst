@@ -4,15 +4,15 @@ export const APP_CONFIG = {
 
   // URL de la Web App de Apps Script (backend/Code.gs). Vacía = modo demostración:
   // se ve el catálogo, pero no hay tienda, examen ni constancias.
-  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbyMNbX0Acu5s8mphx9tp9cYRbIbg-U638iBMmgtQe1GytVJEhWpjkhKc-MuybZyKiwa/exec',
+  APPS_SCRIPT_URL: '',
 
   // Responsable del tratamiento de datos (Ley 1581 de 2012). COMPLETAR antes de vender.
   responsable: {
-    razonSocial: '[SST SAFE]',
-    nit: '[1018455016]',
-    domicilio: '[cALLE 123]',
-    correo: '[carcrios@gmail.com]',
-    telefono: '[+573237157915]'
+    razonSocial: '[CONFIGURAR razón social]',
+    nit: '[CONFIGURAR NIT]',
+    domicilio: '[CONFIGURAR dirección]',
+    correo: '[CONFIGURAR correo de contacto]',
+    telefono: '[CONFIGURAR teléfono]'
   },
 
   // Versión de la Política de Privacidad y de los Términos. Subirla obliga a aceptar de nuevo.
@@ -21,16 +21,18 @@ export const APP_CONFIG = {
 
   // Número de WhatsApp para cotizaciones de empresas, con indicativo (ej. '573001234567').
   // Vacío = no se muestra el botón.
-  WHATSAPP_NUMBER: '573237157915',
+  WHATSAPP_NUMBER: '',
 
   // Póngalo en true solo cuando un abogado haya revisado la política de datos, los términos,
   // el retracto y la garantía. Mientras sea false, esas páginas muestran un aviso de borrador.
   legalReviewed: false,
 
-  // Solo para pruebas locales sin servidor. Déjela vacía en producción.
+  // Solo para pruebas locales sin servidor. Déjelas vacías en producción.
   DEMO_ADMIN_PASSWORD: 'AdminDemo2026!',
   adminAccount: { email: 'admin@academiasst.co', fullName: 'Administrador SST' },
+  DEMO_STUDENT_PASSWORD: 'EstudianteDemo2026!',
+  studentDemoAccount: { email: 'estudiante@academiasst.co', fullName: 'Estudiante Demo' },
 
   legalScopeStatement:
-    'Esta plataforma emite exclusivamente CONSTANCIAS DE CAPACITACIÓN / FORMACIÓN TEÓRICA indicando intensidad horaria, temario, fecha y datos del formador/licencia. Ningún curso en línea habilita por sí solo para ejecutar tareas de alto riesgo o tareas críticas sin evaluación práctica en sitio, aptitud médica ocupacional vigente, autorización del empleador y permiso de trabajo.'
+    'Esta plataforma ofrece capacitación virtual teórica de educación informal (Decreto 1075 de 2015) de apoyo al SG-SST y emite CONSTANCIAS DE FORMACIÓN TEÓRICA con intensidad horaria, temario, fecha y datos del formador. No sustituye certificaciones obligatorias reguladas (Trabajo en Alturas Res. 4272/2021, Espacios Confinados Res. 0491/2020 ni curso 50/20 h SG-SST Res. 4927/2019), ni habilita por sí sola para ejecutar tareas de alto riesgo sin entrenamiento práctico en sitio, aptitud médica, autorización del empleador y permiso de trabajo.'
 };

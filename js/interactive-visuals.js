@@ -578,6 +578,75 @@ export function coursePhoto(courseId) {
   return SCENE_PHOTOS[theme] || SCENE_PHOTOS.elec;
 }
 
+// Galería coherente por dominio (solo fotografías reales verificadas del mismo entorno)
+const DOMAIN_PHOTOS = {
+  fire: {
+    main: './img/scenes/scene-fire.jpg',
+    cylinders: './img/scenes/course-soldadura.jpg',
+    mgmt: './img/scenes/scene-mgmt.jpg'
+  },
+  elec: {
+    main: './img/scenes/scene-loto.jpg',
+    panel: './img/scenes/course-elec.jpg',
+    guard: './img/scenes/course-mecanica.jpg',
+    mgmt: './img/scenes/scene-mgmt.jpg'
+  },
+  chem: {
+    main: './img/scenes/scene-chem.jpg',
+    mgmt: './img/scenes/scene-mgmt.jpg'
+  },
+  mech: {
+    main: './img/scenes/scene-mech.jpg',
+    guard: './img/scenes/course-mecanica.jpg',
+    loto: './img/scenes/scene-loto.jpg',
+    mgmt: './img/scenes/scene-mgmt.jpg'
+  },
+  load: {
+    main: './img/scenes/scene-load.jpg',
+    warehouse: './img/scenes/course-bodega.jpg',
+    mgmt: './img/scenes/scene-mgmt.jpg'
+  },
+  mgmt: {
+    main: './img/scenes/scene-mgmt.jpg'
+  }
+};
+
+function modulePhoto(course, modIndex) {
+  const mod = course.modules[modIndex];
+  const theme = COURSE_SCENES[course.id]?.theme || 'elec';
+  const base = coursePhoto(course.id);
+  if (!mod) return base;
+
+  const t = String(mod.title || '').toLowerCase();
+  const d = DOMAIN_PHOTOS[theme] || DOMAIN_PHOTOS.elec;
+
+  // 1. Módulos de normativa, roles, permiso, auditoría, programa o comité → equipo técnico SST
+  if (/norma|marco|rol|responsab|permiso|auditor|programa|comit[eé]|acta|gesti[oó]n|excepci[oó]n|investigaci[oó]n/.test(t)) {
+    return d.mgmt || base;
+  }
+  // 2. Coincidencias específicas estrictas dentro del mismo dominio
+  if (theme === 'fire') {
+    if (/cilindro|oxicorte|soldadura|equipo|arco/.test(t)) return d.cylinders;
+    return d.main;
+  }
+  if (theme === 'elec') {
+    if (/tablero|el[eé]ctric|retie|arco|distancia|cable/.test(t)) return d.panel;
+    if (/mec[aá]nic|guarda|m[aá]quina|energ[ií]a residual|almacenada/.test(t)) return d.guard;
+    return d.main;
+  }
+  if (theme === 'mech') {
+    if (/bloqueo|loto|aisl|energ[ií]a/.test(t)) return d.loto;
+    if (/polea|banda|transmisi[oó]n|guarda|m[aá]quina|atrapamiento/.test(t)) return d.guard;
+    return d.main;
+  }
+  if (theme === 'load') {
+    if (/bodega|estanter[ií]a|estiba|apilamiento|almacen|pasillo/.test(t)) return d.warehouse;
+    return d.main;
+  }
+
+  return base;
+}
+
 // Coordenadas calibradas al milímetro sobre cada fotografía profesional (base 600x300)
 const CALIBRATED_HOTSPOTS = {
   elec: [
@@ -687,38 +756,23 @@ function hotspotDetailHtml(h, idx, total) {
     </div>`;
 }
 
-// Extrae tarjetas visuales interactivas del contenido de cada módulo para evitar "muros de texto"
+// Extrae tarjetas visuales limpias de cada módulo (sin cortes rotos en normas ni ítems sueltos fuera de contexto)
 function extractModuleNodes(mod) {
   const nodes = [];
+  const labels = ['Concepto clave', 'Control en campo', 'Regla crítica', 'En la práctica'];
   const kps = Array.isArray(mod.keyPoints) ? mod.keyPoints : [];
   kps.forEach((kp, i) => {
     const clean = String(kp).replace(/^Control crítico en campo:\s*/i, '').trim();
     const parts = clean.split(/:\s+/);
-    const title = parts.length > 1 && parts[0].length < 48 ? parts[0] : `Idea clave ${i + 1}`;
-    const body = parts.length > 1 && parts[0].length < 48 ? parts.slice(1).join(': ') : clean;
+    const hasTitle = parts.length > 1 && parts[0].length >= 4 && parts[0].length <= 44;
+    const title = hasTitle ? parts[0].trim() : (labels[i] || `Punto clave ${i + 1}`);
+    const body = hasTitle ? parts.slice(1).join(': ').trim() : clean;
     nodes.push({ title, body, kind: i === 0 ? 'concept' : i === 1 ? 'control' : 'alert' });
   });
-
-  // Si el módulo tiene ítems de lista en su HTML, tomamos hasta 3 adicionales como pasos visuales
-  const liMatches = [...String(mod.content || '').matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)];
-  if (nodes.length < 4 && liMatches.length) {
-    liMatches.slice(0, 4 - nodes.length).forEach((m) => {
-      const txt = m[1].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
-      if (!txt) return;
-      const dot = txt.indexOf('.');
-      const colon = txt.indexOf(':');
-      const cut = colon > 3 && colon < 44 ? colon : (dot > 3 && dot < 44 ? dot : -1);
-      const title = cut > 0 ? txt.slice(0, cut).trim() : 'En la práctica';
-      const body = cut > 0 ? txt.slice(cut + 1).trim() : txt;
-      if (body && !nodes.some((n) => n.body === body)) {
-        nodes.push({ title, body, kind: 'step' });
-      }
-    });
-  }
   return nodes.slice(0, 5);
 }
 
-// Renderiza tarjetas visuales interactivas por módulo (diseño corporativo limpio)
+// Renderiza la tarjeta visual interactiva de cada módulo: fotografía limpia del tema + selector interactivo de conceptos
 export function renderModuleVisual(course, modIndex) {
   const mod = course.modules[modIndex];
   if (!mod) return '';
@@ -727,22 +781,32 @@ export function renderModuleVisual(course, modIndex) {
 
   const sceneThemeKey = COURSE_SCENES[course.id]?.theme || 'elec';
   const theme = THEMES[sceneThemeKey] || THEMES.elec;
+  const photo = modulePhoto(course, modIndex);
   const uid = `mod-${course.id}-${modIndex}`;
 
   return `
     <section class="sst-iv-card sst-iv-mod" data-iv-mod="${esc(uid)}" style="--iv-accent:${theme.accent};--iv-soft:${theme.soft};--iv-dark:${theme.dark};">
       <div class="sst-iv-head">
         <div>
-          <span class="sst-iv-badge">Ruta visual interactiva · Módulo ${modIndex + 1}</span>
-          <h3 class="sst-iv-title">Conceptos clave del módulo</h3>
-          <p class="sst-iv-sub">Recorre cada tarjeta para dominar el módulo de forma clara y rápida.</p>
+          <span class="sst-iv-badge">Guía visual interactiva · Módulo ${modIndex + 1}</span>
+          <h3 class="sst-iv-title">${esc(mod.title)}</h3>
+          <p class="sst-iv-sub">Recorre cada punto clave con las tarjetas o con el botón Siguiente.</p>
         </div>
         <span class="sst-iv-counter" data-iv-counter>1 / ${nodes.length} vistos</span>
       </div>
 
-      <div class="sst-mod-steps" role="tablist" aria-label="Conceptos del módulo ${modIndex + 1}">
+      <div class="sst-iv-photo-stage sst-iv-photo-tap sst-iv-photo-mod" data-iv-tap role="button" tabindex="0" aria-label="Toca la imagen para pasar a la siguiente idea">
+        <img src="${esc(photo)}" alt="${esc(mod.title)}" class="sst-iv-photo" loading="lazy" />
+        <div class="sst-iv-photo-scrim" aria-hidden="true"></div>
+        <div class="sst-iv-photo-caption" data-iv-caption>
+          <span class="sst-iv-cap-step">Idea 1 de ${nodes.length} · Toca la imagen →</span>
+          <strong>${esc(nodes[0].title)}</strong>
+        </div>
+      </div>
+
+      <div class="sst-mod-steps" style="margin-top:0.8rem;" role="tablist" aria-label="Conceptos del módulo ${modIndex + 1}">
         ${nodes.map((n, i) => `
-          <button type="button" class="sst-mod-step ${i === 0 ? 'active visited' : ''}" data-iv-node="${i}">
+          <button type="button" role="tab" aria-selected="${i === 0 ? 'true' : 'false'}" class="sst-mod-step ${i === 0 ? 'active visited' : ''}" data-iv-node="${i}">
             <span class="sst-mod-step-num">${i + 1}</span>
             <span class="sst-mod-step-title">${esc(n.title)}</span>
           </button>`).join('')}
@@ -757,11 +821,11 @@ export function renderModuleVisual(course, modIndex) {
       </div>
 
       <div class="sst-iv-nav-row">
-        <button type="button" class="iui-btn iui-btn-ghost iui-btn-sm" data-iv-prev>← Anterior</button>
-        <div class="sst-iv-dots">
-          ${nodes.map((_, i) => `<button type="button" class="sst-iv-dotbtn ${i === 0 ? 'active' : ''}" data-iv-node="${i}" aria-label="Concepto ${i + 1}"></button>`).join('')}
+        <button type="button" class="iui-btn iui-btn-ghost iui-btn-sm" data-iv-prev disabled>← Idea anterior</button>
+        <div class="sst-iv-dots" aria-hidden="true">
+          ${nodes.map((_, i) => `<span class="sst-iv-dotbtn ${i === 0 ? 'active' : ''}" data-iv-node="${i}"></span>`).join('')}
         </div>
-        <button type="button" class="iui-btn iui-btn-secondary iui-btn-sm" data-iv-next>Siguiente →</button>
+        <button type="button" class="iui-btn iui-btn-secondary iui-btn-sm" data-iv-next>${nodes.length <= 1 ? '✓ Ideas revisadas' : 'Siguiente idea →'}</button>
       </div>
 
       <script type="application/json" data-iv-mod-data>${JSON.stringify(nodes).replace(/</g, '\\u003c')}</script>
@@ -823,7 +887,7 @@ export function bindInteractiveVisuals(scope) {
       if (modCard) {
         const nodeBtn = e.target.closest('[data-iv-node]');
         const prevBtn = e.target.closest('[data-iv-prev]');
-        const nextBtn = e.target.closest('[data-iv-next]');
+        const nextBtn = e.target.closest('[data-iv-next], [data-iv-tap]');
         if (!nodeBtn && !prevBtn && !nextBtn) return;
 
         const dataEl = modCard.querySelector('[data-iv-mod-data]');
@@ -834,8 +898,8 @@ export function bindInteractiveVisuals(scope) {
 
         let cur = Number(modCard.dataset.cur || 0);
         if (nodeBtn) cur = Number(nodeBtn.dataset.ivNode);
-        else if (prevBtn) cur = (cur - 1 + nodes.length) % nodes.length;
-        else if (nextBtn) cur = (cur + 1) % nodes.length;
+        else if (prevBtn) cur = Math.max(0, cur - 1);
+        else if (nextBtn) cur = Math.min(nodes.length - 1, cur + 1);
         modCard.dataset.cur = String(cur);
 
         const visited = new Set((modCard.dataset.visited || '0').split(',').filter(Boolean).map(Number));
@@ -844,11 +908,25 @@ export function bindInteractiveVisuals(scope) {
 
         modCard.querySelectorAll('[data-iv-node]').forEach((el) => {
           const i = Number(el.dataset.ivNode);
-          el.classList.toggle('active', i === cur);
+          const isCur = i === cur;
+          el.classList.toggle('active', isCur);
+          if (el.getAttribute('role') === 'tab') el.setAttribute('aria-selected', isCur ? 'true' : 'false');
           if (visited.has(i)) el.classList.add('visited');
         });
 
+        const pBtn = modCard.querySelector('[data-iv-prev]');
+        const nBtn = modCard.querySelector('[data-iv-next]');
+        if (pBtn) pBtn.disabled = cur <= 0;
+        if (nBtn) {
+          nBtn.disabled = cur >= nodes.length - 1;
+          nBtn.textContent = cur >= nodes.length - 1 ? '✓ Ideas revisadas' : 'Siguiente idea →';
+        }
+
         const n = nodes[cur];
+        const cap = modCard.querySelector('[data-iv-caption]');
+        if (cap && n) {
+          cap.innerHTML = `<span class="sst-iv-cap-step">Idea ${cur + 1} de ${nodes.length}${cur < nodes.length - 1 ? ' · Toca la imagen →' : ' · ✓ Completado'}</span><strong>${esc(n.title)}</strong>`;
+        }
         const detail = modCard.querySelector('[data-iv-mod-detail]');
         if (detail && n) {
           detail.innerHTML = `
@@ -871,6 +949,23 @@ export function bindInteractiveVisuals(scope) {
   }
 
   bindSimulators(scope);
+  bindModuleVideos(scope);
+  bindMiniGames(scope);
+  scope?.querySelectorAll('[data-commit-select]').forEach((sel) => {
+    const key = 'sst_commit_' + sel.dataset.course;
+    const out = sel.closest('.sst-commit-box')?.querySelector('[data-commit-saved]');
+    try {
+      const prev = localStorage.getItem(key);
+      if (prev) {
+        sel.value = prev;
+        if (out) out.textContent = '✓ Compromiso guardado para tu próximo turno.';
+      }
+    } catch { /* noop */ }
+    sel.addEventListener('change', () => {
+      try { localStorage.setItem(key, sel.value); } catch { /* noop */ }
+      if (out) out.textContent = sel.value ? '✓ Compromiso guardado para tu próximo turno.' : '';
+    });
+  });
 }
 
 
@@ -1007,45 +1102,46 @@ export function renderCourseSimulator(courseId) {
       </section>`;
   }
 
-  // Simulador interactivo de secuencia paso a paso (LOTO, Químicos, Andamiero, Comités)
+  // Simulador interactivo de secuencia paso a paso (mezclado para activar memoria real / Active Recall)
   const sequences = {
     loto: {
       title: 'Simulador de Secuencia Segura de Bloqueo (LOTO)',
-      sub: 'Haz clic en los 5 pasos en el orden correcto para lograr Energía Cero.',
-      steps: ['1. Notificar y apagar equipo', '2. Aislar fuente principal', '3. Colocar candado y etiqueta', '4. Liberar energía residual', '5. Verificar energía cero (0 V / 0 PSI)']
+      sub: 'Los pasos están mezclados: selecciona cuál va primero, segundo, tercero… hasta lograr Energía Cero.',
+      steps: ['Notificar y apagar el equipo', 'Aislar la fuente principal', 'Colocar candado y etiqueta', 'Liberar energía residual', 'Verificar energía cero (0 V / 0 PSI)']
     },
     chem: {
       title: 'Simulador de Respuesta ante Fuga o Derrame Químico',
-      sub: 'Activa los 4 pasos en orden correcto para proteger tu vida y la planta.',
-      steps: ['1. Alertar y evacuar contra el viento', '2. Consultar FDS del producto', '3. Usar EPP adecuado (SCBA/químico)', '4. Contener y descontaminar (15 min agua si hubo contacto)']
+      sub: 'Los pasos están mezclados: ordénalos correctamente para proteger tu vida y la planta.',
+      steps: ['Alertar y evacuar contra el viento', 'Consultar la FDS del producto', 'Usar EPP adecuado (SCBA/químico)', 'Contener y descontaminar (15 min agua si hubo contacto)']
     },
     scaffold: {
       title: 'Simulador de Inspección Previa de Andamio',
-      sub: 'Verifica en orden los 4 criterios antes de autorizar la Tarjeta Verde.',
-      steps: ['1. Base firme y nivelada', '2. Diagonales y estructura completas', '3. Plataformas, barandas y rodapié', '4. Firmar Tarjeta Verde del turno']
+      sub: 'Los pasos están mezclados: selecciona el orden correcto antes de autorizar la Tarjeta Verde.',
+      steps: ['Verificar base firme y nivelada', 'Revisar diagonales y estructura completas', 'Confirmar plataformas, barandas y rodapié', 'Firmar Tarjeta Verde del turno']
     },
     mgmt: {
       title: 'Simulador de Gestión Efectiva del Comité',
-      sub: 'Activa en orden las 4 etapas para cerrar un caso o hallazgo con trazabilidad.',
-      steps: ['1. Recibir / identificar con reserva y rigor', '2. Analizar causas o escuchar con imparcialidad', '3. Acordar plan de acción con responsables', '4. Hacer seguimiento en acta hasta el cierre']
+      sub: 'Los pasos están mezclados: ordénalos para cerrar un caso o hallazgo con trazabilidad.',
+      steps: ['Recibir o identificar con reserva y rigor', 'Analizar causas o escuchar con imparcialidad', 'Acordar plan de acción con responsables', 'Hacer seguimiento en acta hasta el cierre']
     }
   };
   const seq = sequences[type] || sequences.loto;
+  const shuffled = seq.steps.map((text, idx) => ({ text, idx })).sort((a, b) => ((a.idx * 7 + 3) % 5) - ((b.idx * 7 + 3) % 5));
 
   return `
     <section class="sst-iv-card sst-sim-card" data-sim="seq" data-course="${esc(courseId)}" style="--iv-accent:#2563eb;--iv-soft:#dbeafe;--iv-dark:#1e3a8a;">
       <div class="sst-iv-head">
         <div>
-          <span class="sst-iv-badge">Simulador paso a paso</span>
+          <span class="sst-iv-badge">Simulador de memoria · Paso a paso</span>
           <h3 class="sst-iv-title">${esc(seq.title)}</h3>
           <p class="sst-iv-sub">${esc(seq.sub)}</p>
         </div>
         <span class="sst-iv-counter ${done ? 'done' : ''}" data-sim-badge>${done ? '✓ Secuencia dominada' : `0 / ${seq.steps.length} pasos`}</span>
       </div>
       <div class="sst-seq-grid">
-        ${seq.steps.map((s, i) => `<button type="button" class="sst-seq-btn" data-seq-idx="${i}">${esc(s)}</button>`).join('')}
+        ${shuffled.map((s) => `<button type="button" class="sst-seq-btn" data-seq-idx="${s.idx}">${esc(s.text)}</button>`).join('')}
       </div>
-      <div class="sst-sim-meter" data-seq-msg aria-live="polite">Haz clic en el <strong>Paso 1</strong> para iniciar la secuencia segura.</div>
+      <div class="sst-sim-meter" data-seq-msg aria-live="polite">Toca el <strong>primer paso</strong> que harías en planta.</div>
     </section>`;
 }
 
@@ -1061,16 +1157,24 @@ export function renderMasterySummary(course, st) {
     <section class="sst-mastery-card">
       <div class="sst-mastery-head">
         <div>
-          <span class="sst-iv-badge" style="--iv-dark:#14532d;--iv-soft:#dcfce7;">Tu avance real</span>
-          <h3 class="sst-iv-title">Lo que ya dominas en ${esc(course.title)}</h3>
+          <span class="sst-iv-badge" style="--iv-dark:#14532d;--iv-soft:#dcfce7;">Resumen de práctica interactiva</span>
+          <h3 class="sst-iv-title">Lo que ya practicaste en ${esc(course.title)}</h3>
         </div>
-        <strong class="sst-mastery-pct">${scorePct} %</strong>
       </div>
       <div class="sst-mastery-badges">
         <span class="sst-mbadge ${m.scene ? 'ok' : ''}">${m.scene ? '✓' : '○'} Escena interactiva</span>
         <span class="sst-mbadge ${m.sim ? 'ok' : ''}">${m.sim ? '✓' : '○'} Simulador práctico</span>
         <span class="sst-mbadge ${readCount >= totalMods ? 'ok' : ''}">${readCount}/${totalMods} Módulos</span>
         <span class="sst-mbadge ${practiced >= totalMods ? 'ok' : ''}">${practiced}/${totalMods} Prácticas</span>
+      </div>
+      <div class="sst-commit-box">
+        <label class="sst-sim-label">Mi compromiso para mi próximo turno en planta:
+          <select class="iui-select" data-commit-select data-course="${esc(course.id)}">
+            <option value="">Elige el primer control que vas a verificar…</option>
+            ${(course.checklist || []).map((item) => `<option value="${esc(item)}">${esc(item)}</option>`).join('')}
+          </select>
+        </label>
+        <p class="iui-xs sst-ok" data-commit-saved style="margin:0.4rem 0 0;"></p>
       </div>
       <details class="sst-prose-details" style="margin-top:0.75rem;">
         <summary>Abrir Guía de Bolsillo SST (reglas de oro para llevar a planta)</summary>
@@ -1191,7 +1295,7 @@ export function bindSimulators(scope) {
         status.textContent = 'Temperatura segura de mantenimiento en caliente.';
       } else {
         meter.classList.add('danger');
-        readout.textContent = `${t} °C — ZONA DE PELIGRO (5 °C – 60 °C)`;
+        readout.textContent = `${t} °C — ZONA DE PELIGRO (5 °C – 59 °C)`;
         status.textContent = 'Riesgo alto de proliferación bacteriana. No mantener alimentos en este rango.';
       }
       setMastery(courseId, 'sim');
@@ -1214,6 +1318,7 @@ export function bindSimulators(scope) {
         if (idx === expected) {
           btn.classList.add('done');
           btn.disabled = true;
+          btn.textContent = `${expected + 1}. ${btn.textContent}`;
           expected++;
           if (expected >= btns.length) {
             msg.classList.add('ok');
@@ -1228,6 +1333,243 @@ export function bindSimulators(scope) {
         } else {
           msg.classList.add('danger');
           msg.innerHTML = `<strong>⚠ Orden incorrecto.</strong> Antes de ese paso debes completar el <strong>Paso ${expected + 1}</strong>.`;
+        }
+      });
+    });
+  });
+}
+
+
+// =====================================================================
+// REPRODUCTOR DE MICRO-VIDEO NARRADO (0 KB, 100 % offline, con voz en español)
+// =====================================================================
+export function renderModuleVideo(course, modIndex) {
+  const mod = course.modules[modIndex];
+  if (!mod) return '';
+  const nodes = extractModuleNodes(mod);
+  if (!nodes.length) return '';
+  const photo = modulePhoto(course, modIndex);
+  const slides = [
+    { title: mod.title, text: `En este módulo aprenderás lo esencial sobre ${mod.title}.` },
+    ...nodes.map((n) => ({ title: n.title, text: n.body }))
+  ];
+  const uid = `vid-${course.id}-${modIndex}`;
+
+  return `
+    <section class="sst-vid-card" data-vid-player="${esc(uid)}">
+      <div class="sst-vid-screen">
+        <img src="${esc(photo)}" alt="${esc(mod.title)}" class="sst-vid-bg" />
+        <div class="sst-vid-overlay">
+          <span class="sst-vid-tag">▶ Micro-video explicativo · ~30 s</span>
+          <div class="sst-vid-subtitles" data-vid-sub aria-live="polite">
+            <strong>${esc(slides[0].title)}</strong>
+            <p>${esc(slides[0].text)}</p>
+          </div>
+        </div>
+        <button type="button" class="sst-vid-bigplay" data-vid-toggle aria-label="Reproducir micro-video">▶</button>
+      </div>
+      <div class="sst-vid-bar">
+        <button type="button" class="iui-btn iui-btn-primary iui-btn-sm" data-vid-toggle>▶ Reproducir</button>
+        <div class="sst-vid-track"><span class="sst-vid-fill" data-vid-fill></span></div>
+        <span class="iui-xs iui-muted" data-vid-step>1 / ${slides.length}</span>
+        <button type="button" class="iui-btn iui-btn-ghost iui-btn-sm" data-vid-mute aria-label="Silenciar o activar voz">🔊 Voz</button>
+      </div>
+      <script type="application/json" data-vid-slides>${JSON.stringify(slides).replace(/</g, '\\u003c')}</script>
+    </section>`;
+}
+
+let activeVidTimer = null;
+
+function stopSpeech() {
+  try { window.speechSynthesis?.cancel(); } catch { /* noop */ }
+}
+
+export function bindModuleVideos(scope) {
+  if (!scope) return;
+  scope.querySelectorAll('[data-vid-player]').forEach((card) => {
+    if (card.dataset.vidBound) return;
+    card.dataset.vidBound = '1';
+    const dataEl = card.querySelector('[data-vid-slides]');
+    if (!dataEl) return;
+    let slides = [];
+    try { slides = JSON.parse(dataEl.textContent || '[]'); } catch { return; }
+    if (!slides.length) return;
+
+    const sub = card.querySelector('[data-vid-sub]');
+    const fill = card.querySelector('[data-vid-fill]');
+    const stepEl = card.querySelector('[data-vid-step]');
+    const bigPlay = card.querySelector('.sst-vid-bigplay');
+    const barToggle = card.querySelector('.sst-vid-bar [data-vid-toggle]');
+    const muteBtn = card.querySelector('[data-vid-mute]');
+
+    let playing = false;
+    let muted = false;
+    let idx = 0;
+
+    const renderSlide = (i) => {
+      const s = slides[i];
+      if (!s) return;
+      if (sub) sub.innerHTML = `<strong>${esc(s.title)}</strong><p>${esc(s.text)}</p>`;
+      if (fill) fill.style.width = `${Math.round(((i + 1) / slides.length) * 100)}%`;
+      if (stepEl) stepEl.textContent = `${i + 1} / ${slides.length}`;
+    };
+
+    const stop = () => {
+      playing = false;
+      clearTimeout(activeVidTimer);
+      stopSpeech();
+      card.classList.remove('is-playing');
+      if (bigPlay) bigPlay.hidden = false;
+      if (barToggle) barToggle.textContent = '▶ Reproducir';
+    };
+
+    const playNext = () => {
+      if (!playing) return;
+      if (idx >= slides.length) {
+        idx = 0;
+        stop();
+        return;
+      }
+      renderSlide(idx);
+      const s = slides[idx];
+      const text = `${s.title}. ${s.text}`;
+      idx++;
+
+      if (!muted && 'speechSynthesis' in window) {
+        stopSpeech();
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = 'es-CO';
+        u.rate = 1.02;
+        u.onend = () => {
+          if (playing) activeVidTimer = setTimeout(playNext, 650);
+        };
+        u.onerror = () => {
+          if (playing) activeVidTimer = setTimeout(playNext, 5000);
+        };
+        window.speechSynthesis.speak(u);
+      } else {
+        activeVidTimer = setTimeout(playNext, 5000);
+      }
+    };
+
+    card.querySelectorAll('[data-vid-toggle]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        if (playing) {
+          stop();
+        } else {
+          playing = true;
+          card.classList.add('is-playing');
+          if (bigPlay) bigPlay.hidden = true;
+          if (barToggle) barToggle.textContent = '⏸ Pausar';
+          if (idx >= slides.length) idx = 0;
+          playNext();
+        }
+      });
+    });
+
+    muteBtn?.addEventListener('click', () => {
+      muted = !muted;
+      muteBtn.textContent = muted ? '🔇 Sin voz' : '🔊 Voz';
+      if (muted) stopSpeech();
+    });
+  });
+}
+
+
+// =====================================================================
+// MINI-JUEGO RÁPIDO: "¿SEGURO O INSEGURO?" (3 retos por curso)
+// =====================================================================
+export function renderMiniGame(course) {
+  const ck = course.checklist || [];
+  const cards = [
+    {
+      q: ck[0] || `Aplicar el control principal de ${course.title} antes de iniciar la tarea.`,
+      safe: true,
+      why: 'Correcto: verificar este control antes de empezar previene el accidente.'
+    },
+    {
+      q: `Omitir la verificación de seguridad en ${course.title} porque "solo toma 5 minutos".`,
+      safe: false,
+      why: 'Inseguro: la mayoría de accidentes graves ocurren en tareas rápidas sin control.'
+    },
+    {
+      q: ck[1] || 'Detener el trabajo y avisar al supervisor si cambian las condiciones del área.',
+      safe: true,
+      why: 'Correcto: detener un trabajo inseguro y cumplir el control salva vidas.'
+    }
+  ];
+
+  return `
+    <section class="sst-iv-card sst-game-card" data-minigame data-course="${esc(course.id)}">
+      <div class="sst-iv-head">
+        <div>
+          <span class="sst-iv-badge" style="--iv-dark:#4c1d95;--iv-soft:#ede9fe;">Mini-juego rápido · 30 s</span>
+          <h3 class="sst-iv-title">Reto: ¿Seguro o Inseguro?</h3>
+          <p class="sst-iv-sub">Toca tu respuesta en cada situación de planta para ganar la medalla del reto.</p>
+        </div>
+        <span class="sst-iv-counter" data-game-score>0 / ${cards.length} aciertos</span>
+      </div>
+
+      <div class="sst-game-stage" data-game-stage>
+        <p class="sst-game-q" data-game-q>${esc(cards[0].q)}</p>
+        <div class="sst-game-actions">
+          <button type="button" class="sst-game-btn safe" data-game-ans="true">✅ Es SEGURO</button>
+          <button type="button" class="sst-game-btn unsafe" data-game-ans="false">⚠️ Es INSEGURO</button>
+        </div>
+        <div class="sst-game-fb" data-game-fb aria-live="polite"></div>
+      </div>
+
+      <script type="application/json" data-game-data>${JSON.stringify(cards).replace(/</g, '\\u003c')}</script>
+    </section>`;
+}
+
+export function bindMiniGames(scope) {
+  if (!scope) return;
+  scope.querySelectorAll('[data-minigame]').forEach((card) => {
+    if (card.dataset.gameBound) return;
+    card.dataset.gameBound = '1';
+    const dataEl = card.querySelector('[data-game-data]');
+    if (!dataEl) return;
+    let cards = [];
+    try { cards = JSON.parse(dataEl.textContent || '[]'); } catch { return; }
+    if (!cards.length) return;
+
+    const qEl = card.querySelector('[data-game-q]');
+    const fbEl = card.querySelector('[data-game-fb]');
+    const scoreEl = card.querySelector('[data-game-score]');
+    const btns = card.querySelectorAll('[data-game-ans]');
+
+    let idx = 0;
+    let score = 0;
+
+    btns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        if (idx >= cards.length) return;
+        const pick = btn.dataset.gameAns === 'true';
+        const cur = cards[idx];
+        const ok = pick === cur.safe;
+        if (ok) score++;
+        idx++;
+
+        if (scoreEl) scoreEl.textContent = `${score} / ${cards.length} aciertos`;
+        if (fbEl) {
+          fbEl.className = `sst-game-fb ${ok ? 'ok' : 'bad'}`;
+          fbEl.innerHTML = `<strong>${ok ? '✓ ¡Bien hecho!' : '✕ Cuidado:'}</strong> ${esc(cur.why)}`;
+        }
+
+        if (idx < cards.length) {
+          setTimeout(() => {
+            if (qEl) qEl.textContent = cards[idx].q;
+          }, 900);
+        } else {
+          btns.forEach((b) => (b.disabled = true));
+          if (scoreEl) {
+            scoreEl.textContent = `🏆 ${score} / ${cards.length} completado`;
+            scoreEl.classList.add('done');
+          }
+          setTimeout(() => {
+            if (qEl) qEl.innerHTML = `<strong>🏆 ¡Reto completado!</strong> Lograste ${score} de ${cards.length} aciertos.`;
+          }, 950);
         }
       });
     });

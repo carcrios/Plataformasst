@@ -1,5 +1,6 @@
 import { APP_CONFIG } from './config.js';
 import { Telemetry } from './telemetry.js';
+import { COURSES } from './catalog.js';
 
 // Sesión y progreso local. Nunca se guardan contraseñas, respuestas ni constancias como fuente de verdad.
 const KEYS = {
@@ -72,7 +73,7 @@ export const API = {
       return session;
     }
 
-    // Modo demostración: solo el administrador, y solo si se configuró una clave de demo
+    // Modo demostración: administrador o estudiante demo (solo si tienen clave configurada)
     if (isAdminEmail(normalizedEmail) && APP_CONFIG.DEMO_ADMIN_PASSWORD && password === APP_CONFIG.DEMO_ADMIN_PASSWORD) {
       const adminSession = {
         id: 'ADMIN-01',
@@ -86,6 +87,25 @@ export const API = {
       };
       writeJSON(KEYS.SESSION, adminSession);
       return adminSession;
+    }
+    if (
+      APP_CONFIG.studentDemoAccount &&
+      normalizedEmail === APP_CONFIG.studentDemoAccount.email.toLowerCase() &&
+      APP_CONFIG.DEMO_STUDENT_PASSWORD &&
+      password === APP_CONFIG.DEMO_STUDENT_PASSWORD
+    ) {
+      const studentSession = {
+        id: 'DEMO-EST-01',
+        fullName: APP_CONFIG.studentDemoAccount.fullName,
+        documentId: '1000000001',
+        email: normalizedEmail,
+        company: 'Empresa Demo',
+        role: 'student',
+        allowedCourses: ['*'],
+        token: null
+      };
+      writeJSON(KEYS.SESSION, studentSession);
+      return studentSession;
     }
     throw new Error('Modo demostración: el ingreso requiere el servidor. Configure APPS_SCRIPT_URL.');
   },
@@ -150,14 +170,40 @@ export const API = {
     return remote && remote.ok ? remote.modulesRead : null;
   },
 
-  // Estado completo del curso según el servidor: lecturas, prácticas, examen, constancia y vigencia
+  // Estado completo del curso según el servidor (o progreso local en modo demo)
   async courseStatus(courseId) {
+    if (!APP_CONFIG.APPS_SCRIPT_URL) {
+      const s = this.getSession();
+      const cur = s ? (this.getProgress(s.id)[courseId] || {}) : {};
+      return {
+        ok: true,
+        modulesRead: cur.modulesRead || [],
+        checked: cur.checked || [],
+        works: cur.works || {},
+        exam: { attemptsUsed: 0, maxAttempts: 3, passed: false }
+      };
+    }
     const remote = await callAppsScript('getProgress', { courseId });
     return remote && remote.ok ? remote : null;
   },
 
   // Avance de todos los cursos del alumno (incluye los vencidos, para renovarlos)
   async dashboard() {
+    if (!APP_CONFIG.APPS_SCRIPT_URL) {
+      const s = this.getSession();
+      const prog = s ? this.getProgress(s.id) : {};
+      return COURSES.map((c) => {
+        const cur = prog[c.id] || {};
+        return {
+          id: c.id,
+          active: true,
+          modulesRead: cur.modulesRead || [],
+          checked: cur.checked || [],
+          works: cur.works || {},
+          exam: { attemptsUsed: 0, maxAttempts: 3, passed: false }
+        };
+      });
+    }
     const remote = await callAppsScript('dashboard');
     return remote && remote.ok ? remote.courses : null;
   },
@@ -197,18 +243,39 @@ export const API = {
     return all[userId][courseId];
   },
 
-  // Guarda hitos de navegación en el servidor (no afecta la aprobación)
+  // Guarda hitos de navegación en el servidor (o local en modo demo)
   async syncProgress(courseId, data) {
+    if (!APP_CONFIG.APPS_SCRIPT_URL) {
+      const s = this.getSession();
+      if (s) this.saveLocalProgress(s.id, courseId, data);
+      return { ok: true };
+    }
     return callAppsScript('saveProgress', { courseId, data });
   },
 
-  // ----- Verificación de práctica y examen (el servidor califica) -----
+  // ----- Verificación de práctica y examen (el servidor califica; en demo simula práctica) -----
   async checkAnswer({ courseId, kind, index, choice }) {
+    if (!APP_CONFIG.APPS_SCRIPT_URL) {
+      const s = this.getSession();
+      const cur = s ? (this.getProgress(s.id)[courseId] || {}) : {};
+      const checked = [...new Set([...(cur.checked || []), `${kind}:${index}`])];
+      if (s) this.saveLocalProgress(s.id, courseId, { checked });
+      return { ok: true, correct: true, feedback: 'Respuesta registrada en modo demostración.' };
+    }
     return requireServer('checkAnswer', { courseId, kind, index, choice });
   },
 
-  // Talleres aplicados y proyecto final (el servidor valida el mínimo de palabras)
+  // Talleres aplicados y proyecto final (en demo guarda localmente)
   async saveWork(payload) {
+    if (!APP_CONFIG.APPS_SCRIPT_URL) {
+      const s = this.getSession();
+      const cur = s ? (this.getProgress(s.id)[payload.courseId] || {}) : {};
+      const works = { ...(cur.works || {}) };
+      const key = payload.kind === 'project' ? 'project' : `workshop:${payload.index}`;
+      works[key] = { answers: payload.answers, rubric: payload.rubric || [], savedAt: new Date().toISOString() };
+      if (s) this.saveLocalProgress(s.id, payload.courseId, { works });
+      return { ok: true };
+    }
     return requireServer('saveWork', payload);
   },
 

@@ -6,11 +6,12 @@ import { esc, root, toast } from './dom.js';
  */
 export function renderPermitsGuide(container) {
   const host = container || root();
+  const hTag = container ? 'h2' : 'h1';
   host.innerHTML = `
     <section style="display:flex; flex-direction:column; gap:1.25rem; max-width:960px; margin:0 auto;">
       <div class="iui-card">
         <span class="iui-badge iui-badge-primary" style="width:fit-content;">Guía Práctica de Campo · Colombia</span>
-        <h1 class="iui-h1" style="margin-top:0.35rem;">Cómo llenar un Permiso de Trabajo y ATS paso a paso</h1>
+        <${hTag} class="${container ? 'iui-h2' : 'iui-h1'}" style="margin-top:0.35rem;">Cómo llenar un Permiso de Trabajo y ATS paso a paso</${hTag}>
         <p class="iui-small iui-muted" style="margin:0;">
           Un permiso de trabajo <strong>no es un papel para cumplir requisito</strong>: es la última barrera administrativa antes de ejecutar una tarea crítica. Aquí aprendes sus 6 bloques obligatorios y practicas diligenciando uno con auditoría automática.
         </p>
@@ -25,7 +26,7 @@ export function renderPermitsGuide(container) {
           </div>
           <div style="padding:0.9rem; border:1px solid var(--iui-border); border-radius:0.625rem; background:var(--iui-surface-alt);">
             <strong>2. Tipo de Tarea Crítica</strong>
-            <p class="iui-xs iui-muted" style="margin:0.35rem 0 0;">Trabajo en caliente, Alturas (riesgo de caída de más de 2 m, Res. 4272 de 2021), Energías peligrosas (LOTO), Izaje de cargas, Espacios confinados o Químicos.</p>
+            <p class="iui-xs iui-muted" style="margin:0.35rem 0 0;">Trabajo en caliente, Alturas (riesgo de caída de 2,0 m o más, Res. 4272 de 2021), Energías peligrosas (LOTO), Izaje de cargas, Espacios confinados o Químicos.</p>
           </div>
           <div style="padding:0.9rem; border:1px solid var(--iui-border); border-radius:0.625rem; background:var(--iui-surface-alt);">
             <strong>3. ATS (Paso → Peligro → Control)</strong>
